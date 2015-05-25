@@ -1,6 +1,7 @@
 #
 # This is a simple example of an iTab schema file.
 #
+## delimiter = \t
 ## header_required = True
 ## null_character = \N
 ## force_order = True

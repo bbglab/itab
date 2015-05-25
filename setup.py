@@ -5,18 +5,18 @@ from itab import __version__, __author__, __author_email__
 setup(
     name="itab",
     version=__version__,
-    packages=find_packages(),  # metadata
+    packages=find_packages(),
     author=__author__,
     author_email=__author_email__,
-    description="Python tab separated values files toolkit",
+    description="Python tab files parsing and validating schema tools.",
     license="Apache License 2",
     keywords="",
-    url="https://github.com/jordeu/itab",
+    url="https://github.com/bbglab/itab",
     long_description=__doc__,
-    install_requires=[],
+    install_requires=['six',],
     entry_points={
         'console_scripts': [
-            'itab = itab.main:cmdline'
+            'tsvcheck = itab.utils.tsvcheck:cmdline'
         ]
     }
 )
