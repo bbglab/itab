@@ -1,7 +1,7 @@
 # 
 # Simple example file
 # 
-## SCHEMA=./case01.itab.schema.tsv
+## SCHEMA=https://raw.githubusercontent.com/bbglab/itab/master/examples/case01.itab.schema.tsv
 DATE	INTEGER	FLOAT
 2015-05-22 10:39:27	23	3.4
 avui	22.3	3.4e10

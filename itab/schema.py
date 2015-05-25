@@ -1,11 +1,22 @@
 import csv
 import logging
+import tempfile
+from urllib.request import urlretrieve
 from itab.files import open_file
+from functools import lru_cache
 
+# Parser and validator imports
 from datetime import datetime
 date = datetime.strptime
 
+DEFAULT_ITAB_CACHE_FOLDER = '~/.itab'
 DEFAULT_SCHEMA_DELIMITER = '\t'
+
+@lru_cache(maxsize=40)
+def _temp_schema_file(schema_url):
+    schema_tmp_file = tempfile.mkstemp(prefix="itab-", suffix='-schema.tsv')[1]
+    urlretrieve(schema_url, schema_tmp_file)
+    return schema_tmp_file
 
 class CSVSchema(object):
 
@@ -13,6 +24,11 @@ class CSVSchema(object):
 
         # Load schema
         schema_file = values['SCHEMA']
+
+        if schema_file.startswith("http"):
+            #TODO Use a custom cache folder
+            schema_file = _temp_schema_file(schema_file)
+
         sd = open_file(schema_file)
         self.schema = {r['HEADER']: self._init_schema(r) for r in csv.DictReader(sd, delimiter=DEFAULT_SCHEMA_DELIMITER)}
 
