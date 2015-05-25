@@ -1,11 +1,7 @@
 #
 # This is a simple example of an iTab schema file.
 #
-## delimiter = \t
-## header_required = True
-## null_character = \N
-## force_order = True
-HEADER	NULLABLE	NULL_VALUE	PARSER	VALIDATOR
-DATE	True	None	date(x, '%Y-%m-%d %H:%M:%S')	x.month == 5
-INTEGER	False	None	int(x)	x > 10
-FLOAT	True	None	float(x)	2.3 < x < 2.6
+HEADER	PARSER	VALIDATOR
+DATE	date(x, '%Y-%m-%d %H:%M:%S')	x.month == 5
+INTEGER	int(x)	x > 10
+FLOAT	float(x)	2.3 < x < 2.6
