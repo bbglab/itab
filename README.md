@@ -21,4 +21,6 @@ for row, errors in reader:
       print(cell)
 ``` 
 
+See more detailed examples [here](examples/Python usage examples.ipynb)
+
 
