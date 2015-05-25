@@ -3,7 +3,7 @@ import io
 import datetime
 
 
-def open_file(file_name, mode=None, values=None, comments=None, commentchar="#", writedate=False, encoding=None, errors=None, newline=None, compresslevel=9):
+def open_file(file_name, mode=None, metadata=None, comments=None, commentchar="#", writedate=False, encoding=None, errors=None, newline=None, compresslevel=9):
     """
         It opens a file descriptor. If the file extension ends with '.gz' it will
         use the 'gzip.open' function. Otherwise it will use the builtin 'open'.
@@ -19,7 +19,7 @@ def open_file(file_name, mode=None, values=None, comments=None, commentchar="#",
     # If we have values or comments we open the file on write mode,
     # otherwise as read mode
     if mode is None:
-        mode = "r" if values is None and comments is None else "w"
+        mode = "r" if metadata is None and comments is None else "w"
 
     if file_name.endswith(".gz"):
         gz_mode = mode.replace("t", "")
@@ -28,7 +28,7 @@ def open_file(file_name, mode=None, values=None, comments=None, commentchar="#",
         fd = io.FileIO(file_name, mode)
 
     return AnnotatedFile(fd,
-                         values=values,
+                         metadata=metadata,
                          comments=comments,
                          commentchar=commentchar,
                          writedate=writedate,
@@ -38,11 +38,11 @@ def open_file(file_name, mode=None, values=None, comments=None, commentchar="#",
 
 
 class AnnotatedFile(io.TextIOWrapper):
-    def __init__(self, fd, values=None, comments=None, commentchar="#", writedate=False,
+    def __init__(self, fd, metadata=None, comments=None, commentchar="#", writedate=False,
                  encoding=None, errors=None, newline=None):
         super().__init__(fd, encoding, errors, newline)
 
-        self.metadata = values
+        self.metadata = metadata
         self.comments = comments
 
         self._commentchar = commentchar
@@ -52,6 +52,12 @@ class AnnotatedFile(io.TextIOWrapper):
                 comments = []
 
             comments.append(str(datetime.datetime.today()))
+
+        if self.comments is None:
+            self.comments = []
+
+        if self.metadata is None:
+            self.metadata = {}
 
         self.writedHeader = False
 
@@ -64,8 +70,7 @@ class AnnotatedFile(io.TextIOWrapper):
                 k, v = line.replace(self._commentchar + self._commentchar + " ", "").split("=")
                 self.metadata[k.strip()] = v.strip()
             else:
-                if self.comments is None:
-                    self.comments = []
+
                 self.comments.append(line.replace(self._commentchar, "").strip())
             line = super().readline()
 

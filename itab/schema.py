@@ -6,6 +6,9 @@ from itab.files import open_file
 from functools import lru_cache
 
 # Parser and validator imports
+import re
+match = re.match
+
 from datetime import datetime
 date = datetime.strptime
 
@@ -20,10 +23,13 @@ def _temp_schema_file(schema_url):
 
 class CSVSchema(object):
 
-    def __init__(self, values, headers):
+    def __init__(self, values, headers, **kwargs):
 
         # Load schema
-        schema_file = values['SCHEMA']
+        if 'schema' in kwargs and kwargs['schema'] is not None:
+            schema_file = kwargs['schema']
+        else:
+            schema_file = values['schema']
 
         if schema_file.startswith("http"):
             #TODO Use a custom cache folder
@@ -83,7 +89,7 @@ class CSVSchema(object):
             s['_parser'] = lambda x, r: x
 
         if 'VALIDATOR' in s:
-            s['_validator'] = eval("lambda x, r: {}".format(s['VALIDATOR']))
+            s['_validator'] = eval("lambda x, r: bool({})".format(s['VALIDATOR']))
         else:
             s['_validator'] = lambda x, r: True
         return s

@@ -7,7 +7,7 @@ DEFAULT_DELIMITER = '\t'
 
 class TabReader(six.Iterator):
 
-    def __init__(self, f):
+    def __init__(self, f, **kwargs):
 
         # Open an annotated and commented file iterator
         self.fd = open_file(f)
@@ -19,7 +19,7 @@ class TabReader(six.Iterator):
         self.headers = next(self.reader)
 
         # Load schema
-        self.schema = CSVSchema(self.metadata, self.headers)
+        self.schema = CSVSchema(self.metadata, self.headers, **kwargs)
 
         # Total number of lines before first data line
         self._line_offset = len(self.comments) + len(self.metadata)
@@ -48,8 +48,8 @@ class TabReader(six.Iterator):
 
 
 class TabDictReader(TabReader):
-    def __init__(self, f, restkey=None, restval=None):
-        super().__init__(f)
+    def __init__(self, f, restkey=None, restval=None, **kwargs):
+        super().__init__(f, **kwargs)
 
         self.restkey = restkey          # key to catch long rows
         self.restval = restval          # default value for short rows
