@@ -1,9 +1,39 @@
 import csv
 import six
 from itab.files import open_file
-from itab.schema import CSVSchema
+from itab.schema import CSVSchema, _temp_schema_file
+import os
 
 DEFAULT_DELIMITER = '\t'
+
+
+def has_schema(fileName):
+
+    fd = open_file(fileName)
+
+    # Create a CSV parser
+    reader = csv.reader(fd, delimiter=DEFAULT_DELIMITER)
+
+    # Load headers
+    headers = next(reader)
+    metadata = fd.metadata
+
+    if 'schema' in metadata and metadata['schema'] is not None:
+        schema_file = metadata['schema']
+    else:
+        return False
+
+    if schema_file.startswith("http"):
+        #TODO Use a custom cache folder
+        schema_file = _temp_schema_file(schema_file)
+
+    try:
+        os.stat(schema_file)
+    except:
+        return False
+
+    return True
+
 
 class TabReader(six.Iterator):
 

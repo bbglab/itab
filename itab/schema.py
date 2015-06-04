@@ -57,40 +57,53 @@ class CSVSchema(object):
     def _parse_cell(self, value, row, line_num, col_num):
 
         err = None
+        if self.headers[col_num] not in self.schema:
+            return value, err
         field_schema = self.schema[self.headers[col_num]]
 
         # Parse the value
-        try:
-            value_parsed = field_schema['_parser'](value, row)
-        except:
-            err = "Parsing error at line {} column {}. [value:'{}' parser:'{}']".format(
-                line_num, col_num+1, value, field_schema['PARSER']
-            )
-            return None, err
+        if field_schema['PARSER'] is not None:
+            try:
+                value_parsed = field_schema['_parser'](value, row)
+            except:
+                err = "Parsing error at line {} column {}: {}. [value:'{}' parser:'{}']".format(
+                    line_num, col_num+1, field_schema['HEADER'], value, field_schema['PARSER']
+                )
+                return None, err
 
         # Validate the value
-        try:
-            valid = field_schema['_validator'](value_parsed, row)
-        except:
-            valid = False
-        finally:
-            if not valid:
-                err = "Validation error at line {} column {}. [value:'{}' validator:'{}']".format(
-                    line_num, col_num, value, field_schema['VALIDATOR']
-                )
+        if field_schema['VALIDATOR'] is not None:
+            try:
+                valid = field_schema['_validator'](value_parsed, row)
+            except:
+                valid = False
+            finally:
+                if not valid:
+                    err = "Validation error at line {} column {}: {}. [value:'{}' validator:'{}']".format(
+                        line_num, col_num, field_schema['HEADER'], value, field_schema['VALIDATOR']
+                    )
 
         return value_parsed, err
 
     @staticmethod
     def _init_schema(s):
-        if 'PARSER' in s:
-            s['_parser'] = eval("lambda x, r: {}".format(s['PARSER']))
-        else:
-            s['_parser'] = lambda x, r: x
+        try:
+            if 'PARSER' in s:
+                s['_parser'] = eval("lambda x, r: {}".format(s['PARSER']))
+            else:
+                s['_parser'] = lambda x, r: x
+        except:
+            logging.error("Bad parser cell  '" + s['PARSER'] + "'" )
+            raise
 
-        if 'VALIDATOR' in s:
-            s['_validator'] = eval("lambda x, r: bool({})".format(s['VALIDATOR']))
-        else:
-            s['_validator'] = lambda x, r: True
+        try:
+            if 'VALIDATOR' in s:
+                s['_validator'] = eval("lambda x, r: bool({})".format(s['VALIDATOR']))
+            else:
+                s['_validator'] = lambda x, r: True
+        except:
+            logging.error("Bad validator cell '" + s['VALIDATOR'] + "'" )
+            raise
+
         return s
 

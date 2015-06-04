@@ -3,6 +3,7 @@ import io
 import datetime
 
 
+
 def open_file(file_name, mode=None, metadata=None, comments=None, commentchar="#", writedate=False, encoding=None, errors=None, newline=None, compresslevel=9):
     """
         It opens a file descriptor. If the file extension ends with '.gz' it will
