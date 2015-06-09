@@ -1,7 +1,8 @@
+import bz2
 import gzip
+import lzma
 import io
 import datetime
-
 
 
 def open_file(file_name, mode=None, metadata=None, comments=None, commentchar="#", writedate=False, encoding=None, errors=None, newline=None, compresslevel=9):
@@ -25,6 +26,12 @@ def open_file(file_name, mode=None, metadata=None, comments=None, commentchar="#
     if file_name.endswith(".gz"):
         gz_mode = mode.replace("t", "")
         fd = gzip.GzipFile(file_name, gz_mode, compresslevel)
+    elif file_name.endswith(".bz2"):
+        bz_mode = mode.replace("t", "")
+        fd = bz2.BZ2File(file_name, bz_mode, compresslevel=compresslevel)
+    elif file_name.endswith(".xz"):
+        lz_mode = mode.replace("t", "")
+        fd = lzma.LZMAFile(file_name, lz_mode, format=None, check=-1, preset=None, filters=None)
     else:
         fd = io.FileIO(file_name, mode)
 

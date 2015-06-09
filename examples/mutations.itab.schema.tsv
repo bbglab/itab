@@ -2,7 +2,7 @@
 # Mutations file schema 
 #
 HEADER	PARSER	VALIDATOR
-CHROMOSOME	str(x).upper()	x in ([str(c) for c in range(1,22)] + ['X', 'Y'])
+CHROMOSOME	str(x).upper()	x in ([str(c) for c in range(1,23)] + ['X', 'Y'])
 POSITION	int(x)	x > 0
 REF	str(x).upper()	x in "ACTG"
 ALT	str(x).upper()	x in "ACTG"

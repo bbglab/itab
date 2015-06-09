@@ -37,7 +37,7 @@ def has_schema(fileName):
 
 class TabReader(six.Iterator):
 
-    def __init__(self, f, **kwargs):
+    def __init__(self, f, header=None, **kwargs):
 
         # Open an annotated and commented file iterator
         self.fd = open_file(f)
@@ -46,13 +46,22 @@ class TabReader(six.Iterator):
         self.reader = csv.reader(self.fd, delimiter=DEFAULT_DELIMITER)
 
         # Load headers
-        self.headers = next(self.reader)
+        if header is None:
+            self.headers = next(self.reader)
+        else:
+            self.headers = header
 
         # Load schema
         self.schema = CSVSchema(self.metadata, self.headers, **kwargs)
 
         # Total number of lines before first data line
         self._line_offset = len(self.comments) + len(self.metadata)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.fd.close()
 
     def __iter__(self):
         return self
