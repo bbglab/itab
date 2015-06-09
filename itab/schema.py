@@ -61,6 +61,21 @@ class CSVSchema(object):
             return value, err
         field_schema = self.schema[self.headers[col_num]]
 
+        # Validate the nullability of the cell
+        if field_schema['NULLABLE'] is not None:
+            try:
+                null = True
+                if (value is None):
+                    null = field_schema['_nullable'](value, row)
+            except:
+                null = False
+            finally:
+                if not null:
+                    err = "Nullability error at line {} column {}: {}. [value:'{}' nullability:'{}']".format(
+                        line_num, col_num, field_schema['HEADER'], value, field_schema['NULLABLE']
+                    )
+                    return None, err
+
         # Parse the value
         if field_schema['PARSER'] is not None:
             try:
@@ -87,6 +102,15 @@ class CSVSchema(object):
 
     @staticmethod
     def _init_schema(s):
+        try:
+            if 'NULLABLE' in s:
+                s['_nullable'] = eval("lambda x, r: bool({})".format(s['NULLABLE']))
+            else:
+                s['_nullable'] = lambda x, r: True
+        except:
+            logging.error("Bad validator cell '" + s['VALIDATOR'] + "'" )
+            raise
+
         try:
             if 'PARSER' in s:
                 s['_parser'] = eval("lambda x, r: {}".format(s['PARSER']))
