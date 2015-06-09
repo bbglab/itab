@@ -97,7 +97,7 @@ class CSVSchema(object):
         finally:
             if not null:
                 err = "Nullability error at line {} column {}: {}. [value:'{}' nullability:'{}']".format(
-                    line_num, col_num, field_schema.get('HEADER', None), value, field_schema.get('NULLABLE', None)
+                    line_num, col_num+1, field_schema.get('HEADER', None), value, field_schema.get('NULLABLE', None)
                 )
                 return None, err
 
@@ -118,7 +118,7 @@ class CSVSchema(object):
         finally:
             if not valid:
                 err = "Validation error at line {} column {}: {}. [value:'{}' validator:'{}']".format(
-                    line_num, col_num, field_schema.get('HEADER', None), value, field_schema.get('VALIDATOR', None)
+                    line_num, col_num+1, field_schema.get('HEADER', None), value, field_schema.get('VALIDATOR', None)
                 )
 
         return value_parsed, err
