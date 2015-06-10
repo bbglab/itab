@@ -127,7 +127,7 @@ class CSVSchema(object):
     def _init_schema(k, s):
         try:
             if '_nullable' not in s:
-                if 'NULLABLE' in s:
+                if s.get('NULLABLE', None) is not None:
                     s['_nullable'] = eval("lambda x, r: bool({})".format(s['NULLABLE']))
                 else:
                     s['_nullable'] = lambda x, r: True
@@ -137,7 +137,7 @@ class CSVSchema(object):
 
         try:
             if '_parser' not in s:
-                if 'PARSER' in s:
+                if s.get('PARSER', None) is not None:
                     s['_parser'] = eval("lambda x, r: {}".format(s['PARSER']))
                 else:
                     s['_parser'] = lambda x, r: x
@@ -147,7 +147,7 @@ class CSVSchema(object):
 
         try:
             if '_validator' not in s:
-                if 'VALIDATOR' in s:
+                if s.get('VALIDATOR', None) is not None:
                     s['_validator'] = eval("lambda x, r: bool({})".format(s['VALIDATOR']))
                 else:
                     s['_validator'] = lambda x, r: True
