@@ -1,39 +1,13 @@
 import csv
 import six
 from itab.files import open_file
-from itab.schema import CSVSchema, _temp_schema_file
-import os
+from itab.schema import Schema
 
 DEFAULT_DELIMITER = '\t'
 
-
-def has_schema(fileName):
-
-    fd = open_file(fileName)
-
-    # Create a CSV parser
-    reader = csv.reader(fd, delimiter=DEFAULT_DELIMITER)
-
-    # Load headers
-    headers = next(reader)
-    metadata = fd.metadata
-
-    if 'schema' in metadata and metadata['schema'] is not None:
-        schema_file = metadata['schema']
-    else:
-        return False
-
-    if schema_file.startswith("http"):
-        #TODO Use a custom cache folder
-        schema_file = _temp_schema_file(schema_file)
-
-    try:
-        os.stat(schema_file)
-    except:
-        return False
-
-    return True
-
+def has_schema(file):
+    with TabReader(file) as reader:
+        return not reader.schema.schema_not_found
 
 class TabReader(six.Iterator):
 
@@ -52,7 +26,7 @@ class TabReader(six.Iterator):
             self.headers = header
 
         # Load schema
-        self.schema = CSVSchema(self.metadata, self.headers, **kwargs)
+        self.schema = Schema(self.metadata, self.headers, **kwargs)
 
         # Total number of lines before first data line
         self._line_offset = len(self.comments) + len(self.metadata)
@@ -67,7 +41,7 @@ class TabReader(six.Iterator):
         return self
 
     def __next__(self):
-        return self.schema.parse_row(next(self.reader), self.line_num)
+        return self.schema.read_line(next(self.reader), self.line_num)
 
     @property
     def dialect(self):

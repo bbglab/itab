@@ -12,6 +12,23 @@ match = re.match
 from datetime import datetime
 date = datetime.strptime
 
+# Schema headers
+SCHEMA_HEADER = 'header'
+SCHEMA_READER = 'reader'
+SCHEMA_READER_EVAL = '_reader'
+SCHEMA_WRITER = 'writer'
+SCHEMA_WRITER_EVAL = '_writer'
+SCHEMA_VALIDATOR = 'validator'
+SCHEMA_VALIDATOR_EVAL = '_validator'
+SCHEMA_NULLABLE = 'nullable'
+SCHEMA_NULLABLE_EVAL = '_nullable'
+
+# Default behaviours
+DEFAULT_NULLABLE = lambda x, r: True
+DEFAULT_READER = lambda x, r: x
+DEFAULT_WRITER = lambda x, r: "{}".format(x)
+DEFAULT_VALIDATOR = lambda x, r: True
+
 DEFAULT_ITAB_CACHE_FOLDER = '~/.itab'
 DEFAULT_SCHEMA_DELIMITER = '\t'
 
@@ -22,11 +39,12 @@ def _temp_schema_file(schema_url):
     return schema_tmp_file
 
 
-class CSVSchema(object):
+class Schema(object):
 
     def __init__(self, values, headers, **kwargs):
 
         self.headers = headers
+        self.schema_not_found = True
 
         # Load schema
         if 'schema' in kwargs and kwargs['schema'] is not None:
@@ -34,11 +52,10 @@ class CSVSchema(object):
 
             if type(schema_value) == dict:
                 self.schema = schema_value
-                self.schema['fields'] = {k: self._init_schema(k, v) for k, v in schema_value['fields'].items()}
+                self.schema['fields'] = {k: self._init_schema_field(k, v) for k, v in schema_value['fields'].items()}
                 return
             else:
                 schema_file = schema_value
-
         elif 'schema' in values:
             schema_file = values['schema']
         else:
@@ -51,19 +68,20 @@ class CSVSchema(object):
 
         sd = open_file(schema_file)
         self.schema = {
-            'fields': {r['HEADER']: self._init_schema(r['HEADER'], r) for r in csv.DictReader(sd, delimiter=DEFAULT_SCHEMA_DELIMITER)}
+            'fields': {r[SCHEMA_HEADER]: self._init_schema_field(r[SCHEMA_HEADER], r) for r in csv.DictReader(sd, delimiter=DEFAULT_SCHEMA_DELIMITER)}
         }
+        self.schema_not_found = False
 
         # Check headers
         for h in self.headers:
             if h not in self.schema['fields']:
                 logging.warning("Unknown header '{}'".format(h))
 
-    def parse_row(self, r, line_num):
+    def read_line(self, r, line_num):
         result = []
         errors = []
         for ix, x in enumerate(r):
-            val, err = self._parse_cell(x, r, line_num, ix)
+            val, err = self._read_cell(x, r, line_num, ix)
             result.append(val)
             if err is not None:
                 errors.append(err)
@@ -78,7 +96,7 @@ class CSVSchema(object):
     def _field_schema(self, col_num):
         return self.schema['fields'].get(self._header_id(col_num), None)
 
-    def _parse_cell(self, value, row, line_num, col_num):
+    def _read_cell(self, value, row, line_num, col_num):
 
         err = None
         field_schema = self._field_schema(col_num)
@@ -90,72 +108,88 @@ class CSVSchema(object):
         # Validate the nullability of the cell
         try:
             null = True
-            if (value is None):
-                null = field_schema['_nullable'](value, row)
+            if value is None:
+                null = field_schema[SCHEMA_NULLABLE_EVAL](value, row)
         except:
             null = False
         finally:
             if not null:
                 err = "Nullability error at line {} column {}: {}. [value:'{}' nullability:'{}']".format(
-                    line_num, col_num, field_schema.get('HEADER', None), value, field_schema.get('NULLABLE', None)
+                    line_num, col_num, field_schema.get(SCHEMA_HEADER, None), value, field_schema.get(SCHEMA_NULLABLE, None)
                 )
                 return None, err
 
-        # Parse the value
+        # Read the value
         try:
-            value_parsed = field_schema['_parser'](value, row)
+            value_parsed = field_schema[SCHEMA_READER_EVAL](value, row)
         except:
             err = "Parsing error at line {} column {}: {}. [value:'{}' parser:'{}']".format(
-                line_num, col_num+1, field_schema.get('HEADER', None), value, field_schema.get('PARSER', None)
+                line_num, col_num+1, field_schema.get(SCHEMA_HEADER, None), value, field_schema.get(SCHEMA_READER, None)
             )
             return None, err
 
         # Validate the value
         try:
-            valid = field_schema['_validator'](value_parsed, row)
+            valid = field_schema[SCHEMA_VALIDATOR_EVAL](value_parsed, row)
         except:
             valid = False
         finally:
             if not valid:
                 err = "Validation error at line {} column {}: {}. [value:'{}' validator:'{}']".format(
-                    line_num, col_num, field_schema.get('HEADER', None), value, field_schema.get('VALIDATOR', None)
+                    line_num, col_num, field_schema.get(SCHEMA_HEADER, None), value, field_schema.get(SCHEMA_VALIDATOR, None)
                 )
 
         return value_parsed, err
 
     @staticmethod
-    def _init_schema(k, s):
+    def _init_schema_field(k, s):
+
+        # Check that the header id is defined
+        if SCHEMA_HEADER not in s:
+            s[SCHEMA_HEADER] = k
+
+        # Initialize nullable
         try:
-            if '_nullable' not in s:
-                if 'NULLABLE' in s:
-                    s['_nullable'] = eval("lambda x, r: bool({})".format(s['NULLABLE']))
+            if SCHEMA_NULLABLE_EVAL not in s:
+                if SCHEMA_NULLABLE in s:
+                    s[SCHEMA_NULLABLE_EVAL] = eval("lambda x, r: bool({})".format(s[SCHEMA_NULLABLE]))
                 else:
-                    s['_nullable'] = lambda x, r: True
+                    s[SCHEMA_NULLABLE_EVAL] = DEFAULT_NULLABLE
         except:
-            logging.error("Bad nullable cell '" + s.get('VALIDATOR', None) + "'" )
+            logging.error("Bad schema nullable cell '" + s.get(SCHEMA_NULLABLE, None) + "'" )
             raise
 
+        # Initialize reader
         try:
-            if '_parser' not in s:
-                if 'PARSER' in s:
-                    s['_parser'] = eval("lambda x, r: {}".format(s['PARSER']))
+            if SCHEMA_READER_EVAL not in s:
+                if SCHEMA_READER in s:
+                    s[SCHEMA_READER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_READER]))
                 else:
-                    s['_parser'] = lambda x, r: x
+                    s[SCHEMA_READER_EVAL] = DEFAULT_READER
         except:
-            logging.error("Bad parser cell  '" + s.get('PARSER', None) + "'" )
+            logging.error("Bad schema reader cell  '" + s.get(SCHEMA_READER, None) + "'" )
             raise
 
+        # Initialize writer
         try:
-            if '_validator' not in s:
-                if 'VALIDATOR' in s:
-                    s['_validator'] = eval("lambda x, r: bool({})".format(s['VALIDATOR']))
+            if SCHEMA_WRITER_EVAL not in s:
+                if SCHEMA_WRITER in s:
+                    s[SCHEMA_WRITER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_WRITER]))
                 else:
-                    s['_validator'] = lambda x, r: True
+                    s[SCHEMA_WRITER_EVAL] = DEFAULT_WRITER
         except:
-            logging.error("Bad validator cell '" + s.get('VALIDATOR', None) + "'" )
+            logging.error("Bad schema writer cell '" + s.get(SCHEMA_WRITER, None) + "'")
             raise
 
-        if 'HEADER' not in s:
-            s['HEADER'] = k
+        # Initialize validator
+        try:
+            if SCHEMA_VALIDATOR_EVAL not in s:
+                if SCHEMA_VALIDATOR in s:
+                    s[SCHEMA_VALIDATOR_EVAL] = eval("lambda x, r: bool({})".format(s[SCHEMA_VALIDATOR]))
+                else:
+                    s[SCHEMA_VALIDATOR_EVAL] = DEFAULT_VALIDATOR
+        except:
+            logging.error("Bad schema validator cell '" + s.get(SCHEMA_VALIDATOR, None) + "'")
+            raise
 
         return s
