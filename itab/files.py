@@ -92,11 +92,11 @@ class AnnotatedFile(io.TextIOWrapper):
         # First write the header comments
         if not self.writedHeader:
 
-            if self.comments is not None:
+            if len(self.comments) > 0:
                 super().write("\n".join([self._commentchar + " " + comment for comment in self.comments]))
                 super().write("\n")
 
-            if self.metadata is not None:
+            if len(self.metadata) > 0:
                 super().write("\n".join([self._commentchar + self._commentchar + " " + str(k) + "=" + str(v) for k, v in self.metadata.items()]))
                 super().write("\n")
 

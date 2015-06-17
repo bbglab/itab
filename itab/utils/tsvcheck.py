@@ -5,7 +5,7 @@ import itab
 def tsvcheck(file, schema=None):
 
     # Create an ITab reader
-    reader = itab.open(file, schema=schema)
+    reader = itab.reader(file, schema=schema)
 
     all_errors = []
     for row, errors in reader:

@@ -30,6 +30,9 @@ DEFAULT_WRITER = lambda x, r: "{}".format(x)
 DEFAULT_VALIDATOR = lambda x, r: True
 
 DEFAULT_ITAB_CACHE_FOLDER = '~/.itab'
+
+DEFAULT_NULL_TOKEN = None
+DEFAULT_DELIMITER = '\t'
 DEFAULT_SCHEMA_DELIMITER = '\t'
 
 @lru_cache(maxsize=40)
@@ -41,51 +44,43 @@ def _temp_schema_file(schema_url):
 
 class Schema(object):
 
-    def __init__(self, values, headers, **kwargs):
+    def __init__(self, schema, headers=None):
 
         self.headers = headers
         self.schema_not_found = True
+        self.schema_url = None
 
         # Load schema
-        if 'schema' in kwargs and kwargs['schema'] is not None:
-            schema_value = kwargs['schema']
+        if schema is not None:
 
-            if type(schema_value) == dict:
-                self.schema = schema_value
-                self.schema['fields'] = {k: self._init_schema_field(k, v) for k, v in schema_value['fields'].items()}
-                return
+            if type(schema) == dict:
+                self.schema = schema
+                self.schema['fields'] = {k: self._init_schema_field(k, v) for k, v in schema['fields'].items()}
             else:
-                schema_file = schema_value
-        elif 'schema' in values:
-            schema_file = values['schema']
+                self.schema_url = schema
         else:
             self.schema = {'fields': {}}
-            return
 
-        if schema_file.startswith("http"):
-            #TODO Use a custom cache folder
-            schema_file = _temp_schema_file(schema_file)
+        if self.schema_url is not None:
+            if self.schema_url.startswith("http"):
+                #TODO Use a custom cache folder
+                schema_file = _temp_schema_file(self.schema_url)
+            else:
+                schema_file = self.schema_url
 
-        sd = open_file(schema_file)
-        self.schema = {
-            'fields': {r[SCHEMA_HEADER]: self._init_schema_field(r[SCHEMA_HEADER], r) for r in csv.DictReader(sd, delimiter=DEFAULT_SCHEMA_DELIMITER)}
-        }
-        self.schema_not_found = False
+            sd = open_file(schema_file)
+            self.schema = {
+                'fields': {r[SCHEMA_HEADER]: self._init_schema_field(r[SCHEMA_HEADER], r) for r in csv.DictReader(sd, delimiter=DEFAULT_SCHEMA_DELIMITER)}
+            }
+            self.schema_not_found = False
 
         # Check headers
-        for h in self.headers:
-            if h not in self.schema['fields']:
-                logging.warning("Unknown header '{}'".format(h))
-
-    def read_line(self, r, line_num):
-        result = []
-        errors = []
-        for ix, x in enumerate(r):
-            val, err = self._read_cell(x, r, line_num, ix)
-            result.append(val)
-            if err is not None:
-                errors.append(err)
-        return result, errors
+        if self.headers is not None:
+            for h in self.headers:
+                if h not in self.schema['fields']:
+                    logging.warning("Unknown header '{}'".format(h))
+        else:
+            self.headers = list(self.schema['fields'].keys())
 
     def _header_id(self, col_num):
         if col_num >= len(self.headers):
@@ -96,7 +91,7 @@ class Schema(object):
     def _field_schema(self, col_num):
         return self.schema['fields'].get(self._header_id(col_num), None)
 
-    def _read_cell(self, value, row, line_num, col_num):
+    def format_cell(self, value, row, line_num, col_num, parser='reader'):
 
         err = None
         field_schema = self._field_schema(col_num)
@@ -104,6 +99,10 @@ class Schema(object):
         # If we allow columns without schema
         if field_schema is None:
             return value, err
+
+        # Parse nulls if we are reading
+        if parser == 'reader' and value == DEFAULT_NULL_TOKEN:
+            value = None
 
         # Validate the nullability of the cell
         try:
@@ -119,14 +118,20 @@ class Schema(object):
                 )
                 return None, err
 
-        # Read the value
-        try:
-            value_parsed = field_schema[SCHEMA_READER_EVAL](value, row)
-        except:
-            err = "Parsing error at line {} column {}: {}. [value:'{}' parser:'{}']".format(
-                line_num, col_num+1, field_schema.get(SCHEMA_HEADER, None), value, field_schema.get(SCHEMA_READER, None)
-            )
-            return None, err
+        if value is None:
+            return None if parser == 'reader' else DEFAULT_NULL_TOKEN
+
+        if parser == 'reader':
+            # Read the value
+            try:
+                value_parsed = field_schema[SCHEMA_READER_EVAL](value, row)
+            except:
+                err = "Reading error at line {} column {}: {}. [value:'{}' reader:'{}']".format(
+                    line_num, col_num+1, field_schema.get(SCHEMA_HEADER, None), value, field_schema.get(SCHEMA_READER, None)
+                )
+                return None, err
+        else:
+            value_parsed = value
 
         # Validate the value
         try:
@@ -138,6 +143,16 @@ class Schema(object):
                 err = "Validation error at line {} column {}: {}. [value:'{}' validator:'{}']".format(
                     line_num, col_num, field_schema.get(SCHEMA_HEADER, None), value, field_schema.get(SCHEMA_VALIDATOR, None)
                 )
+
+        if parser == 'writer':
+            # Write the value
+            try:
+                value_parsed = field_schema[SCHEMA_WRITER_EVAL](value_parsed, row)
+            except:
+                err = "Writing error at line {} column {}: {}. [value:'{}' writer:'{}']".format(
+                    line_num, col_num+1, field_schema.get(SCHEMA_HEADER, None), value, field_schema.get(SCHEMA_READER, None)
+                )
+                return None, err
 
         return value_parsed, err
 

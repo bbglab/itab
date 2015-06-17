@@ -1,9 +1,8 @@
 import csv
 import six
 from itab.files import open_file
-from itab.schema import Schema
+from itab.schema import Schema, DEFAULT_DELIMITER
 
-DEFAULT_DELIMITER = '\t'
 
 def has_schema(file):
     with TabReader(file) as reader:
@@ -26,7 +25,10 @@ class TabReader(six.Iterator):
             self.headers = header
 
         # Load schema
-        self.schema = Schema(self.metadata, self.headers, **kwargs)
+        schema_url = kwargs.get('schema', None)
+        if schema_url is None:
+            schema_url = self.fd.metadata.get('schema', None)
+        self.schema = Schema(schema_url, headers=self.headers)
 
         # Total number of lines before first data line
         self._line_offset = len(self.comments) + len(self.metadata)
@@ -41,7 +43,15 @@ class TabReader(six.Iterator):
         return self
 
     def __next__(self):
-        return self.schema.read_line(next(self.reader), self.line_num)
+        row = next(self.reader)
+        result = []
+        errors = []
+        for ix, x in enumerate(row):
+            val, err = self.schema.format_cell(x, row, self.line_num, ix, parser='reader')
+            result.append(val)
+            if err is not None:
+                errors.append(err)
+        return result, errors
 
     @property
     def dialect(self):
