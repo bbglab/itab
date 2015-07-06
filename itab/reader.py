@@ -4,10 +4,6 @@ from itab.files import open_file
 from itab.schema import Schema, DEFAULT_DELIMITER
 
 
-def has_schema(file):
-    with TabReader(file) as reader:
-        return not reader.schema.schema_not_found
-
 class TabReader(six.Iterator):
 
     def __init__(self, f, header=None, **kwargs):
