@@ -12,8 +12,9 @@ setup(
     license="Apache License 2",
     keywords="",
     url="https://github.com/bbglab/itab",
+    download_url="https://github.com/bbglab/itab/archive/"+__version__+".tar.gz",
     long_description=__doc__,
-    install_requires=['six',],
+    install_requires=['six'],
     entry_points={
         'console_scripts': [
             'tsvcheck = itab.utils.tsvcheck:cmdline'
