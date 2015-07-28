@@ -167,7 +167,10 @@ class Schema(object):
         try:
             if SCHEMA_NULLABLE_EVAL not in s:
                 if SCHEMA_NULLABLE in s:
-                    s[SCHEMA_NULLABLE_EVAL] = eval("lambda x, r: bool({})".format(s[SCHEMA_NULLABLE]))
+                    if callable(s[SCHEMA_NULLABLE]):
+                        s[SCHEMA_NULLABLE_EVAL] = s[SCHEMA_NULLABLE]
+                    else:
+                        s[SCHEMA_NULLABLE_EVAL] = eval("lambda x, r: bool({})".format(s[SCHEMA_NULLABLE]))
                 else:
                     s[SCHEMA_NULLABLE_EVAL] = DEFAULT_NULLABLE
         except:
@@ -178,7 +181,10 @@ class Schema(object):
         try:
             if SCHEMA_READER_EVAL not in s:
                 if SCHEMA_READER in s:
-                    s[SCHEMA_READER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_READER]))
+                    if callable(s[SCHEMA_READER]):
+                        s[SCHEMA_READER_EVAL] = s[SCHEMA_READER]
+                    else:
+                        s[SCHEMA_READER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_READER]))
                 else:
                     s[SCHEMA_READER_EVAL] = DEFAULT_READER
         except:
@@ -189,7 +195,11 @@ class Schema(object):
         try:
             if SCHEMA_WRITER_EVAL not in s:
                 if SCHEMA_WRITER in s:
-                    s[SCHEMA_WRITER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_WRITER]))
+                    if callable(s[SCHEMA_WRITER]):
+                        s[SCHEMA_WRITER_EVAL] = s[SCHEMA_WRITER]
+                    else:
+                        s[SCHEMA_WRITER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_WRITER]))
+
                 else:
                     s[SCHEMA_WRITER_EVAL] = DEFAULT_WRITER
         except:
@@ -200,7 +210,10 @@ class Schema(object):
         try:
             if SCHEMA_VALIDATOR_EVAL not in s:
                 if SCHEMA_VALIDATOR in s:
-                    s[SCHEMA_VALIDATOR_EVAL] = eval("lambda x, r: bool({})".format(s[SCHEMA_VALIDATOR]))
+                    if callable(s[SCHEMA_VALIDATOR]):
+                        s[SCHEMA_VALIDATOR_EVAL] = s[SCHEMA_VALIDATOR]
+                    else:
+                        s[SCHEMA_VALIDATOR_EVAL] = eval("lambda x, r: bool({})".format(s[SCHEMA_VALIDATOR]))
                 else:
                     s[SCHEMA_VALIDATOR_EVAL] = DEFAULT_VALIDATOR
         except:
