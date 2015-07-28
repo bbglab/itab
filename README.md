@@ -3,7 +3,7 @@ Python tab files parsing and validating schema tools.
 
 ## Install
 ```bash
-pip install --upgrade git+https://github.com/bbglab/itab.git
+pip install itab
 ```
 
 ## Usage example
