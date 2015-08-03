@@ -49,6 +49,7 @@ class Schema(object):
         self.headers = headers
         self.schema_not_found = True
         self.schema_url = None
+        _schema_headers = []
 
         # Load schema
         if schema is not None:
@@ -56,6 +57,7 @@ class Schema(object):
             if type(schema) == dict:
                 self.schema = schema
                 self.schema['fields'] = {k: self._init_schema_field(k, v) for k, v in schema['fields'].items()}
+                _schema_headers = list(self.schema['fields'].keys())
             else:
                 self.schema_url = schema
         else:
@@ -69,9 +71,12 @@ class Schema(object):
                 schema_file = self.schema_url
 
             sd = open_file(schema_file)
-            self.schema = {
-                'fields': {r[SCHEMA_HEADER]: self._init_schema_field(r[SCHEMA_HEADER], r) for r in csv.DictReader(sd, delimiter=DEFAULT_SCHEMA_DELIMITER)}
-            }
+            self.schema = {'fields': {}}
+            _schema_headers = []
+            for r in csv.DictReader(sd, delimiter=DEFAULT_SCHEMA_DELIMITER):
+                self.schema['fields'][r[SCHEMA_HEADER]] = self._init_schema_field(r[SCHEMA_HEADER], r)
+                _schema_headers.append(r[SCHEMA_HEADER])
+
             self.schema_not_found = False
 
         # Check headers
@@ -80,7 +85,7 @@ class Schema(object):
                 if h not in self.schema['fields']:
                     logging.warning("Unknown header '{}'".format(h))
         else:
-            self.headers = list(self.schema['fields'].keys())
+            self.headers = _schema_headers
 
     def _header_id(self, col_num):
         if col_num >= len(self.headers):
@@ -184,7 +189,10 @@ class Schema(object):
                     if callable(s[SCHEMA_READER]):
                         s[SCHEMA_READER_EVAL] = s[SCHEMA_READER]
                     else:
-                        s[SCHEMA_READER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_READER]))
+                        if s[SCHEMA_READER] is None:
+                            s[SCHEMA_READER_EVAL] = DEFAULT_READER
+                        else:
+                            s[SCHEMA_READER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_READER]))
                 else:
                     s[SCHEMA_READER_EVAL] = DEFAULT_READER
         except:
@@ -198,7 +206,10 @@ class Schema(object):
                     if callable(s[SCHEMA_WRITER]):
                         s[SCHEMA_WRITER_EVAL] = s[SCHEMA_WRITER]
                     else:
-                        s[SCHEMA_WRITER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_WRITER]))
+                        if s[SCHEMA_READER] is None:
+                            s[SCHEMA_WRITER_EVAL] = DEFAULT_WRITER
+                        else:
+                            s[SCHEMA_WRITER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_WRITER]))
 
                 else:
                     s[SCHEMA_WRITER_EVAL] = DEFAULT_WRITER
@@ -209,7 +220,7 @@ class Schema(object):
         # Initialize validator
         try:
             if SCHEMA_VALIDATOR_EVAL not in s:
-                if SCHEMA_VALIDATOR in s:
+                if s.get(SCHEMA_VALIDATOR, None) is not None:
                     if callable(s[SCHEMA_VALIDATOR]):
                         s[SCHEMA_VALIDATOR_EVAL] = s[SCHEMA_VALIDATOR]
                     else:
