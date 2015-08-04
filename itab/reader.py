@@ -2,7 +2,7 @@ import csv
 import six
 from itab.files import open_file
 from itab.schema import Schema, DEFAULT_DELIMITER
-
+import os
 
 class TabReader(six.Iterator):
 
@@ -24,6 +24,8 @@ class TabReader(six.Iterator):
         schema_url = kwargs.get('schema', None)
         if schema_url is None:
             schema_url = self.fd.metadata.get('schema', None)
+            if schema_url is not None and not schema_url.startswith("http") and not schema_url.startswith("/"):
+                schema_url = os.path.dirname(self.fd.name) + "/" + schema_url
         self.schema = Schema(schema_url, headers=self.headers)
 
         # Total number of lines before first data line

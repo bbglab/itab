@@ -11,7 +11,7 @@ class TabWriter(object):
         self.schema = Schema(schema, headers=headers)
 
         # Check if the schema is a URL and save it as a comment
-        if type(schema) == str and schema.startswith('http'):
+        if type(schema) == str:
             metadata = {'schema': schema}
         else:
             metadata = None

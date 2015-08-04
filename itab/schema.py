@@ -70,6 +70,7 @@ class Schema(object):
             else:
                 schema_file = self.schema_url
 
+
             sd = open_file(schema_file)
             self.schema = {'fields': {}}
             _schema_headers = []
@@ -189,7 +190,7 @@ class Schema(object):
                     if callable(s[SCHEMA_READER]):
                         s[SCHEMA_READER_EVAL] = s[SCHEMA_READER]
                     else:
-                        if s[SCHEMA_READER] is None:
+                        if s.get(SCHEMA_READER, None) is None:
                             s[SCHEMA_READER_EVAL] = DEFAULT_READER
                         else:
                             s[SCHEMA_READER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_READER]))
@@ -206,7 +207,7 @@ class Schema(object):
                     if callable(s[SCHEMA_WRITER]):
                         s[SCHEMA_WRITER_EVAL] = s[SCHEMA_WRITER]
                     else:
-                        if s[SCHEMA_READER] is None:
+                        if s.get(SCHEMA_WRITER, None) is None:
                             s[SCHEMA_WRITER_EVAL] = DEFAULT_WRITER
                         else:
                             s[SCHEMA_WRITER_EVAL] = eval("lambda x, r: {}".format(s[SCHEMA_WRITER]))
