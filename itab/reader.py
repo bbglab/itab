@@ -15,7 +15,7 @@ class TabReader(six.Iterator):
         self.reader = csv.reader(self.fd, delimiter=DEFAULT_DELIMITER)
 
         # Load headers
-        if header is None:
+        if header is None or len(header)==0:
             self.headers = next(self.reader)
         else:
             self.headers = header
@@ -26,6 +26,11 @@ class TabReader(six.Iterator):
             schema_url = self.fd.metadata.get('schema', None)
             if schema_url is not None and not schema_url.startswith("http") and not schema_url.startswith("/"):
                 schema_url = os.path.dirname(self.fd.name) + "/" + schema_url
+
+        if header is not None and len(header)==0: #Just for testing the schema inside the file
+            self.schema_url = schema_url
+            return
+
         self.schema = Schema(schema_url, headers=self.headers)
 
         # Total number of lines before first data line
