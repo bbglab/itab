@@ -24,14 +24,12 @@ class TabReader(six.Iterator):
         schema_url = kwargs.get('schema', None)
         if schema_url is None:
             schema_url = self.fd.metadata.get('schema', None)
-            if schema_url is not None and not schema_url.startswith("http") and not schema_url.startswith("/"):
-                schema_url = os.path.dirname(self.fd.name) + "/" + schema_url
 
         if header is not None and len(header)==0: #Just for testing the schema inside the file
             self.schema_url = schema_url
             return
 
-        self.schema = Schema(schema_url, headers=self.headers)
+        self.schema = Schema(schema_url, headers=self.headers, basedir=os.path.dirname(self.fd.name))
 
         # Total number of lines before first data line
         self._line_offset = len(self.comments) + len(self.metadata)

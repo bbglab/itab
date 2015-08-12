@@ -1,4 +1,5 @@
 import csv
+import os
 from itab.files import open_file
 from itab.schema import DEFAULT_DELIMITER, Schema
 
@@ -8,7 +9,7 @@ class TabWriter(object):
     def __init__(self, f, schema=None, headers=None, comments=None, write_headers=True):
 
         # Load schema
-        self.schema = Schema(schema, headers=headers)
+        self.schema = Schema(schema, headers=headers, basedir=os.path.dirname(f))
 
         # Check if the schema is a URL and save it as a comment
         if type(schema) == str:

@@ -2,7 +2,8 @@ import argparse
 
 import itab
 
-def tsvcheck(file, schema=None):
+
+def check(file, schema=None):
 
     # Create an ITab reader
     reader = itab.reader(file, schema=schema)
@@ -28,7 +29,7 @@ def cmdline():
     parser.add_argument("--schema", dest="schema", default=None)
     args = parser.parse_args()
 
-    errors = tsvcheck(args.file, schema=args.schema)
+    errors = check(args.file, schema=args.schema)
 
     # Return a system error if there is any error
     ret_code = -1 if len(errors) > 0 else 0

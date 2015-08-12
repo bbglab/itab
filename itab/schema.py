@@ -1,5 +1,6 @@
 import csv
 import logging
+import os
 import tempfile
 from urllib.request import urlretrieve
 from itab.files import open_file
@@ -22,6 +23,7 @@ SCHEMA_VALIDATOR = 'validator'
 SCHEMA_VALIDATOR_EVAL = '_validator'
 SCHEMA_NULLABLE = 'nullable'
 SCHEMA_NULLABLE_EVAL = '_nullable'
+SCHEMA_HELP = 'help'
 
 # Default behaviours
 DEFAULT_NULLABLE = lambda x, r: True
@@ -44,7 +46,13 @@ def _temp_schema_file(schema_url):
 
 class Schema(object):
 
-    def __init__(self, schema, headers=None):
+    def __init__(self, schema, headers=None, basedir=None):
+
+        if basedir is not None \
+                and type(schema) == str \
+                and not schema.startswith("http") \
+                and not schema.startswith("/"):
+            schema = os.path.join(basedir, schema)
 
         self.headers = headers
         self.schema_not_found = True
