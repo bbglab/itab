@@ -1,29 +1,31 @@
 import csv
+import os
 from itab.files import open_file
 from itab.schema import DEFAULT_DELIMITER, Schema
 
 
 class TabWriter(object):
 
-    def __init__(self, f, schema=None, headers=None):
+    def __init__(self, f, schema=None, headers=None, comments=None, write_headers=True):
 
         # Load schema
-        self.schema = Schema(schema, headers=headers)
+        self.schema = Schema(schema, headers=headers, basedir=os.path.dirname(f))
 
         # Check if the schema is a URL and save it as a comment
-        if type(schema) == str and schema.startswith('http'):
+        if type(schema) == str:
             metadata = {'schema': schema}
         else:
             metadata = None
 
         # Open an annotated and commented file iterator
-        self.fd = open_file(f, metadata=metadata, mode="w")
+        self.fd = open_file(f, metadata=metadata, mode="w", comments=comments)
 
         # Use default python writer
         self.writer = csv.writer(self.fd, delimiter=DEFAULT_DELIMITER)
 
         # Write header
-        self.writer.writerow(self.schema.headers)
+        if write_headers:
+            self.writer.writerow(self.schema.headers)
         self.line_num = 0
 
     def writerow(self, row):
@@ -48,14 +50,14 @@ class TabWriter(object):
 
 class TabDictWriter(TabWriter):
 
-    def __init__(self, file, schema=None, headers=None, extrasaction='ignore'):
+    def __init__(self, file, schema=None, headers=None, extrasaction='ignore', write_headers=True):
         """
         :param file: File path
         :param schema: A file, url or python dictionary with the tab schema
         :param extrasaction: If it's equal to 'ignore', the values with a key not defined as a schema field will be
         ignored. If it's equal to 'append' the values will be added at the end of the line, but without a header.
         """
-        TabWriter.__init__(self, file, schema=schema, headers=headers)
+        TabWriter.__init__(self, file, schema=schema, headers=headers, write_headers=write_headers)
         self.extrasaction = extrasaction
 
     def writerow(self, row_dict):

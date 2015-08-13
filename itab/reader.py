@@ -2,7 +2,7 @@ import csv
 import six
 from itab.files import open_file
 from itab.schema import Schema, DEFAULT_DELIMITER
-
+import os
 
 class TabReader(six.Iterator):
 
@@ -15,7 +15,7 @@ class TabReader(six.Iterator):
         self.reader = csv.reader(self.fd, delimiter=DEFAULT_DELIMITER)
 
         # Load headers
-        if header is None:
+        if header is None or len(header)==0:
             self.headers = next(self.reader)
         else:
             self.headers = header
@@ -24,7 +24,12 @@ class TabReader(six.Iterator):
         schema_url = kwargs.get('schema', None)
         if schema_url is None:
             schema_url = self.fd.metadata.get('schema', None)
-        self.schema = Schema(schema_url, headers=self.headers)
+
+        if header is not None and len(header)==0: #Just for testing the schema inside the file
+            self.schema_url = schema_url
+            return
+
+        self.schema = Schema(schema_url, headers=self.headers, basedir=os.path.dirname(self.fd.name))
 
         # Total number of lines before first data line
         self._line_offset = len(self.comments) + len(self.metadata)

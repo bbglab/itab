@@ -17,7 +17,8 @@ setup(
     install_requires=['six'],
     entry_points={
         'console_scripts': [
-            'tsvcheck = itab.utils.tsvcheck:cmdline'
+            'itab-check = itab.utils.check:cmdline',
+            'itab-help = itab.utils.help:cmdline'
         ]
     }
 )

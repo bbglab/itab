@@ -1,7 +1,7 @@
 #
 # This is a simple example of an iTab schema file.
 #
-header	reader	validator
-DATE	date(x, '%Y-%m-%d %H:%M:%S')	x.month == 5
-INTEGER	int(x)	x > 10
-FLOAT	float(x)	2.3 < x < 2.6
+header	reader	validator	help
+DATE	date(x, '%Y-%m-%d %H:%M:%S')	x.month == 5	A date example
+INTEGER	int(x)	x > 10	An integer example
+FLOAT	float(x)	2.3 < x < 2.6	A float example

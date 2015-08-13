@@ -75,8 +75,11 @@ class AnnotatedFile(io.TextIOWrapper):
             if line.startswith(self._commentchar + self._commentchar):
                 if self.metadata is None:
                     self.metadata = {}
-                k, v = line.replace(self._commentchar + self._commentchar + " ", "").split("=")
-                self.metadata[k.strip()] = v.strip()
+                try:
+                    k, v = line.replace(self._commentchar + self._commentchar + " ", "").split("=")
+                    self.metadata[k.strip()] = v.strip()
+                except:
+                    pass #It is not metadata, but it is not an error
             else:
 
                 self.comments.append(line.replace(self._commentchar, "").strip())
