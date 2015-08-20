@@ -4,6 +4,7 @@ from itab.files import open_file
 from itab.schema import Schema, DEFAULT_DELIMITER
 import os
 
+
 class TabReader(six.Iterator):
 
     def __init__(self, f, header=None, **kwargs):
@@ -29,7 +30,7 @@ class TabReader(six.Iterator):
             self.schema_url = schema_url
             return
 
-        self.schema = Schema(schema_url, headers=self.headers, basedir=os.path.dirname(self.fd.name))
+        self.schema = Schema(schema_url, headers=self.headers, basedir=os.path.dirname(f))
 
         # Total number of lines before first data line
         self._line_offset = len(self.comments) + len(self.metadata)
