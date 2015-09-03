@@ -16,7 +16,7 @@ class TabReader(six.Iterator):
         self.reader = csv.reader(self.fd, delimiter=DEFAULT_DELIMITER)
 
         # Load headers
-        if header is None or len(header)==0:
+        if header is None or len(header) == 0:
             self.headers = next(self.reader)
         else:
             self.headers = header

@@ -33,7 +33,7 @@ DEFAULT_VALIDATOR = lambda x, r: True
 
 DEFAULT_ITAB_CACHE_FOLDER = '~/.itab'
 
-DEFAULT_NULL_TOKEN = None
+DEFAULT_NULL_TOKEN = ''
 DEFAULT_DELIMITER = '\t'
 DEFAULT_SCHEMA_DELIMITER = '\t'
 
@@ -133,7 +133,7 @@ class Schema(object):
                 return None, err
 
         if value is None:
-            return None if parser == 'reader' else DEFAULT_NULL_TOKEN
+            return None, err if parser == 'reader' else DEFAULT_NULL_TOKEN
 
         if parser == 'reader':
             # Read the value
