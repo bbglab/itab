@@ -3,7 +3,7 @@ from itab.writer import TabWriter, TabDictWriter
 
 __author__ = 'Jordi Deu-Pons'
 __author_email__ = 'jordi@jordeu.net'
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 
 def has_schema(file):
