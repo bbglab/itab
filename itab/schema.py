@@ -133,7 +133,10 @@ class Schema(object):
                 return None, err
 
         if value is None:
-            return None, err if parser == 'reader' else DEFAULT_NULL_TOKEN
+            if parser == 'reader':
+                return None, err
+            else:
+                DEFAULT_NULL_TOKEN, err
 
         if parser == 'reader':
             # Read the value
