@@ -78,15 +78,17 @@ class Schema(object):
             else:
                 schema_file = self.schema_url
 
+            if os.path.exists(schema_file):
+                sd = open_file(schema_file)
+                self.schema = {'fields': {}}
+                _schema_headers = []
+                for r in csv.DictReader(sd, delimiter=DEFAULT_SCHEMA_DELIMITER):
+                    self.schema['fields'][r[SCHEMA_HEADER]] = self._init_schema_field(r[SCHEMA_HEADER], r)
+                    _schema_headers.append(r[SCHEMA_HEADER])
 
-            sd = open_file(schema_file)
-            self.schema = {'fields': {}}
-            _schema_headers = []
-            for r in csv.DictReader(sd, delimiter=DEFAULT_SCHEMA_DELIMITER):
-                self.schema['fields'][r[SCHEMA_HEADER]] = self._init_schema_field(r[SCHEMA_HEADER], r)
-                _schema_headers.append(r[SCHEMA_HEADER])
-
-            self.schema_not_found = False
+                self.schema_not_found = False
+            else:
+                self.schema = {'fields': {}}
 
         # Check headers
         if self.headers is not None:
