@@ -7,13 +7,13 @@ import os
 
 class TabReader(six.Iterator):
 
-    def __init__(self, f, header=None, **kwargs):
+    def __init__(self, f, header=None, commentchar='#', delimiter=DEFAULT_DELIMITER, **kwargs):
 
         # Open an annotated and commented file iterator
-        self.fd = open_file(f)
+        self.fd = open_file(f, commentchar=commentchar)
 
         # Create a CSV parser
-        self.reader = csv.reader(self.fd, delimiter=DEFAULT_DELIMITER)
+        self.reader = csv.reader(self.fd, delimiter=delimiter)
 
         # Load headers
         if header is None or len(header) == 0:

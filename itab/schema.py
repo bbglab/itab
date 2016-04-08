@@ -46,7 +46,7 @@ def _temp_schema_file(schema_url):
 
 class Schema(object):
 
-    def __init__(self, schema, headers=None, basedir=None):
+    def __init__(self, schema, headers=None, basedir=None, ignore_unknown_headers=True):
 
         if basedir is not None \
                 and type(schema) == str \
@@ -93,7 +93,7 @@ class Schema(object):
         # Check headers
         if self.headers is not None:
             for h in self.headers:
-                if h not in self.schema['fields']:
+                if h not in self.schema['fields'] and not ignore_unknown_headers:
                     logging.warning("Unknown header '{}'".format(h))
         else:
             self.headers = _schema_headers

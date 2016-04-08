@@ -6,7 +6,7 @@ from itab.schema import DEFAULT_DELIMITER, Schema
 
 class TabWriter(object):
 
-    def __init__(self, f, schema=None, headers=None, comments=None, write_headers=True):
+    def __init__(self, f, schema=None, headers=None, comments=None, write_headers=False, delimiter=DEFAULT_DELIMITER):
 
         # Load schema
         self.schema = Schema(schema, headers=headers, basedir=os.path.dirname(f))
@@ -21,7 +21,7 @@ class TabWriter(object):
         self.fd = open_file(f, metadata=metadata, mode="w", comments=comments)
 
         # Use default python writer
-        self.writer = csv.writer(self.fd, delimiter=DEFAULT_DELIMITER)
+        self.writer = csv.writer(self.fd, delimiter=delimiter)
 
         # Write header
         if write_headers:
