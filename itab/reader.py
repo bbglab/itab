@@ -1,7 +1,7 @@
 import csv
 import six
 from itab.files import open_file
-from itab.schema import Schema, DEFAULT_DELIMITER
+from itab.schema import Schema, DEFAULT_DELIMITER, DEFAULT_NULL_TOKEN
 import os
 
 
@@ -46,6 +46,17 @@ class TabReader(six.Iterator):
 
     def __next__(self):
         row = next(self.reader)
+
+        l_row = len(row)
+        l_headers = len(self.headers)
+
+        if l_row < l_headers:
+            row += [DEFAULT_NULL_TOKEN]*(l_headers - l_row)
+
+        if l_row > l_headers:
+            row = row[:l_headers]
+            # TODO Check a configurable error
+
         result = []
         errors = []
         for ix, x in enumerate(row):
