@@ -46,6 +46,11 @@ class TabReader(six.Iterator):
 
     def __next__(self):
         row = next(self.reader)
+
+        # Skip empty lines
+        if self.schema.schema.get('skip_empty', False) and len(row) == 0:
+            return self.__next__()
+
         result = []
         errors = []
         for ix, x in enumerate(row):
